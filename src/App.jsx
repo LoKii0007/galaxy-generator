@@ -3,7 +3,6 @@ import "./App.css";
 import { useEffect } from "react";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import GUI from "lil-gui";
-import { lerp } from "three/src/math/MathUtils.js";
 
 function App() {
   useEffect(() => {
@@ -150,9 +149,6 @@ function App() {
       generateGalaxy();
     });
 
-    const light = new THREE.AmbientLight(0xffffff, 2);
-    scene.add(light);
-
     //? camera
     const camera = new THREE.PerspectiveCamera(
       75,
@@ -182,6 +178,13 @@ function App() {
     };
 
     window.addEventListener("resize", onResize);
+
+    //? scroll
+    let scrollY = window.scrollY
+
+    window.addEventListener(('scroll'), ()=>{
+      camera.position.z = scrollY / sizes.height * 3
+    })
 
     // OrbitControls
     const controls = new OrbitControls(camera, renderer.domElement);
@@ -219,9 +222,6 @@ function App() {
       animationId = requestAnimationFrame(tick);
     }
     tick();
-
-    console.log(particleGeometry);
-    console.log(particles);
 
     // cleanup on unmount
     return () => {
