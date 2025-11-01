@@ -26,7 +26,8 @@ function App() {
       verticalPower: 4,
       horizontalPower: 2,
       innerColor: 0xff0000,
-      outerColor: 0x0000ff,
+      outerColor: 0xbbbbf7,
+      rotationSpeed : 0.1
     };
 
     let particleGeometry = null;
@@ -117,6 +118,7 @@ function App() {
     };
     generateGalaxy();
 
+    gui.add(parameters, "rotationSpeed", 0.01, 5, 0.0001)
     gui.add(parameters, "count", 10, 1000000, 1).onFinishChange(() => {
       generateGalaxy();
     });
@@ -159,6 +161,7 @@ function App() {
       100
     );
     camera.position.z = 3;
+    camera.position.y = 1;
     scene.add(camera);
 
     //? renderer
@@ -187,27 +190,38 @@ function App() {
     let animationId;
     const clock = new THREE.Clock();
     function tick() {
-      renderer.render(scene, camera);
-      animationId = requestAnimationFrame(tick);
-
       const elapsedTime = clock.getElapsedTime();
 
-      // for (let i = 0; i < count; i++) {
-      // let i3 = i * 3;
+      // for (let i = 0; i < parameters.count; i++) {
+      //   const i3 = i * 3;
 
-      // const x = particleGeometry.attributes.position.array[i3 + 0];
-      // const y = particleGeometry.attributes.position.array[i3 + 1];
-      // const z = particleGeometry.attributes.position.array[i3 + 2];
+      //   // Get the particle's distance from center
+      //   const x = particleGeometry.attributes.position.array[i3];
+      //   const z = particleGeometry.attributes.position.array[i3 + 2];
+      //   const radius = Math.sqrt(x * x + z * z);
 
-      // particleGeometry.attributes.position.array[i3 + 0] = Math.cos(
-      //   elapsedTime + x
-      // );
-      // particleGeometry.attributes.position.array[i3 + 2] =
-      //   Math.cos(elapsedTime);
+      //   // Calculate current angle and add a small rotation increment
+      //   const angle = Math.atan2(z, x);
+      //   const rotationIncrement = rotationSpeed * 0.016; // approximate frame time
+
+      //   // Update position
+      //   particleGeometry.attributes.position.array[i3] =
+      //     Math.cos(angle + rotationIncrement) * radius;
+      //   particleGeometry.attributes.position.array[i3 + 2] =
+      //     Math.sin(angle + rotationIncrement) * radius;
       // }
-      // particleGeometry.attributes.position.needsUpdate = true;
+
+      particles.rotation.y = elapsedTime * parameters.rotationSpeed
+
+      particleGeometry.attributes.position.needsUpdate = true;
+      controls.update();
+      renderer.render(scene, camera);
+      animationId = requestAnimationFrame(tick);
     }
     tick();
+
+    console.log(particleGeometry);
+    console.log(particles);
 
     // cleanup on unmount
     return () => {
