@@ -5,29 +5,44 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import GUI from "lil-gui";
 
 function App() {
+  const scene = new THREE.Scene();
+  const gui = new GUI();
+
+  const sizes = {
+    width: window.innerWidth,
+    height: window.innerHeight,
+  };
+
+  const parameters = {
+    count: 200000,
+    size: 0.005,
+    radius: 4,
+    branches: 5,
+    spin: 2,
+    radnomness: 0.4,
+    verticalPower: 4,
+    horizontalPower: 2,
+    innerColor: 0xff0000,
+    outerColor: 0xbbbbf7,
+    rotationSpeed: 0.1,
+  };
+
+  //? camera
+  const camera = new THREE.PerspectiveCamera(
+    75,
+    sizes.width / sizes.height,
+    0.01,
+    100
+  );
+  camera.position.z = 3;
+  camera.position.y = 1;
+
+  const cameraGroup = new THREE.Group();
+  cameraGroup.add(camera);
+  scene.add(cameraGroup);
+
   useEffect(() => {
     const canvas = document.querySelector("canvas.webgl");
-    const scene = new THREE.Scene();
-    const gui = new GUI();
-
-    const sizes = {
-      width: window.innerWidth,
-      height: window.innerHeight,
-    };
-
-    const parameters = {
-      count: 200000,
-      size: 0.005,
-      radius: 4,
-      branches: 5,
-      spin: 2,
-      radnomness: 0.4,
-      verticalPower: 4,
-      horizontalPower: 2,
-      innerColor: 0xff0000,
-      outerColor: 0xbbbbf7,
-      rotationSpeed : 0.1
-    };
 
     let particleGeometry = null;
     let particleMaterial = null;
@@ -117,7 +132,7 @@ function App() {
     };
     generateGalaxy();
 
-    gui.add(parameters, "rotationSpeed", 0.01, 5, 0.0001)
+    gui.add(parameters, "rotationSpeed", 0, 5, 0.0001);
     gui.add(parameters, "count", 10, 1000000, 1).onFinishChange(() => {
       generateGalaxy();
     });
@@ -149,17 +164,6 @@ function App() {
       generateGalaxy();
     });
 
-    //? camera
-    const camera = new THREE.PerspectiveCamera(
-      75,
-      sizes.width / sizes.height,
-      0.01,
-      100
-    );
-    camera.position.z = 3;
-    camera.position.y = 1;
-    scene.add(camera);
-
     //? renderer
     const renderer = new THREE.WebGLRenderer({ canvas });
     renderer.setSize(sizes.width, sizes.height);
@@ -180,11 +184,23 @@ function App() {
     window.addEventListener("resize", onResize);
 
     //? scroll
-    let scrollY = window.scrollY
+    let scrollY = window.scrollY;
 
-    window.addEventListener(('scroll'), ()=>{
-      camera.position.z = scrollY / sizes.height * 3
-    })
+    window.addEventListener("scroll", () => {
+      scrollY = window.scrollY;
+    });
+
+    //? parallax effect
+    let cursor = {
+      x: 0,
+      y: 0,
+      multiplier: 1 / 10,
+    };
+
+    window.addEventListener("mousemove", (event) => {
+      cursor.x = event.clientX / sizes.width - 0.5;
+      cursor.y = -event.clientY / sizes.height - 0.5;
+    });
 
     // OrbitControls
     const controls = new OrbitControls(camera, renderer.domElement);
@@ -192,8 +208,26 @@ function App() {
 
     let animationId;
     const clock = new THREE.Clock();
+
+    let prevTime = 0;
     function tick() {
       const elapsedTime = clock.getElapsedTime();
+      const deltaTime = elapsedTime - prevTime;
+      prevTime = elapsedTime;
+
+      const parallaxX = cursor.x * cursor.multiplier;
+      const parallaxY = cursor.y * cursor.multiplier;
+
+      // cameraGroup.position.x = parallaxX;
+      // cameraGroup.position.y = parallaxY
+
+      //* smooother
+      cameraGroup.position.x +=
+        (parallaxX - cameraGroup.position.x) * deltaTime * 5;
+      cameraGroup.position.y +=
+        (parallaxY - cameraGroup.position.y) * deltaTime * 5;
+
+      cameraGroup.position.z = (scrollY / sizes.height) * 3;
 
       // for (let i = 0; i < parameters.count; i++) {
       //   const i3 = i * 3;
@@ -214,7 +248,7 @@ function App() {
       //     Math.sin(angle + rotationIncrement) * radius;
       // }
 
-      particles.rotation.y = elapsedTime * parameters.rotationSpeed
+      // particles.rotation.y = elapsedTime * parameters.rotationSpeed;
 
       particleGeometry.attributes.position.needsUpdate = true;
       controls.update();
