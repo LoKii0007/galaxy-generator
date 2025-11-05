@@ -248,7 +248,7 @@ function App() {
       //     Math.sin(angle + rotationIncrement) * radius;
       // }
 
-      // particles.rotation.y = elapsedTime * parameters.rotationSpeed;
+      particles.rotation.y = elapsedTime * parameters.rotationSpeed;
 
       particleGeometry.attributes.position.needsUpdate = true;
       controls.update();
