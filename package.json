@@ -14,7 +14,8 @@
     "lil-gui": "^0.21.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
-    "three": "^0.180.0"
+    "three": "^0.180.0",
+    "vite-plugin-glsl": "^1.5.5"
   },
   "devDependencies": {
     "@eslint/js": "^9.36.0",

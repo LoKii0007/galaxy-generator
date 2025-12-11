@@ -3,6 +3,8 @@ import "./App.css";
 import { useEffect } from "react";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import GUI from "lil-gui";
+import fragmentShader from "./shaders/fragment.glsl";
+import vertexShader from "./shaders/vertex.glsl";
 
 function App() {
   const scene = new THREE.Scene();
@@ -15,7 +17,7 @@ function App() {
 
   const parameters = {
     count: 200000,
-    size: 0.005,
+    size: 20,
     radius: 4,
     branches: 5,
     spin: 2,
@@ -62,6 +64,7 @@ function App() {
 
       const positions = new Float32Array(parameters.count * 3);
       const colors = new Float32Array(parameters.count * 3);
+      const scales = new Float32Array(parameters.count * 1);
 
       const colorInside = new THREE.Color(parameters.innerColor);
       const colorOutside = new THREE.Color(parameters.outerColor);
@@ -107,6 +110,9 @@ function App() {
         colors[i3 + 0] = lerpColor.r;
         colors[i3 + 1] = lerpColor.g;
         colors[i3 + 2] = lerpColor.b;
+
+        scales[i] = Math.random();
+
       }
 
       particleGeometry.setAttribute(
@@ -119,24 +125,34 @@ function App() {
         new THREE.BufferAttribute(colors, 3)
       );
 
+            particleGeometry.setAttribute(
+        "aScale",
+        new THREE.BufferAttribute(scales, 1)
+      );
+
       // material
-      particleMaterial = new THREE.PointsMaterial({
-        size: parameters.size,
+      particleMaterial = new THREE.ShaderMaterial({
+        vertexShader,
+        fragmentShader,
         depthWrite: false,
-        blending: THREE.AdditiveBlending,
         vertexColors: true,
+        blending: THREE.AdditiveBlending,
+        uniforms: {
+          uSize: {
+            value: parameters.size * renderer.getPixelRatio(),
+          },
+        },
       });
 
       particles = new THREE.Points(particleGeometry, particleMaterial);
       scene.add(particles);
     };
-    generateGalaxy();
 
     gui.add(parameters, "rotationSpeed", 0, 5, 0.0001);
     gui.add(parameters, "count", 10, 1000000, 1).onFinishChange(() => {
       generateGalaxy();
     });
-    gui.add(parameters, "size", 0.0001, 0.05, 0.0001).onFinishChange(() => {
+    gui.add(parameters, "size", 1, 100, 0.0001).onFinishChange(() => {
       generateGalaxy();
     });
     gui.add(parameters, "radius", 1, 50, 0.01).onFinishChange(() => {
@@ -168,6 +184,8 @@ function App() {
     const renderer = new THREE.WebGLRenderer({ canvas });
     renderer.setSize(sizes.width, sizes.height);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+    generateGalaxy();
 
     // Resize handler
     const onResize = () => {
